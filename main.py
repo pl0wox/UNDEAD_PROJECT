@@ -136,6 +136,7 @@ class Lich(Undead):
         super().__init__(name, hp)
 
     lich_list = []
+    print("hi")
 
     @staticmethod
     def add():
