@@ -40,6 +40,22 @@ class Zombie(Undead):
     def attack(self):
         return super().getHP() * 0.5
 
+    def eat(self, obj):
+        if self.getHP() < 50:
+            print(f"{self.getName()} cannot Attack {obj.getName()}")
+        else:
+            self.setHP(self.getHP() + (obj.getHP() / 2))
+            obj.setHP(obj.getHP() / 2)
+            print(f"[{self.getName()}:]")
+            print("Health: ", self.getHP())
+
+            if Zombie.isDead(self, True):
+                print("Status: Dead")
+            else:
+                print("Status: Alive")
+
+
+
     @staticmethod
     def add():
         zombie = Zombie()
@@ -215,7 +231,7 @@ def select_zombie():
     if 1 <= x <= len(Zombie.zombie_list):
         selected_zombie = Zombie.zombie_list[x - 1]
         print("You selected:", selected_zombie.getName())
-        # Perform actions with the selected zombie here
+        # Perform actions with the selected zombie
 
         print("                         [SKILLS]\n")
         print("[1] - Eat")
@@ -227,9 +243,12 @@ def select_zombie():
         match int(choice()):
             case 1:
                 print("Use Bite to who?\n\n")
-                attack_undead(selected_zombie.getName())
+                Zombie.eat(selected_zombie, attack_undead(selected_zombie))
+                #attack_undead(selected_zombie.getName())
 
-                return
+
+
+                return main_menu()
             case 2:
                 print("YOu have used normal attack!!")
                 return main_menu()
@@ -238,11 +257,8 @@ def select_zombie():
         print("Invalid selection. Please try again.")
         select_zombie()
 
-
-        def bite():
-            find_undead = (Zombie.zombie_list + Vampire.vampire_list)
-
     return choose_command()
+
 
 
 def select_vampire():
@@ -353,12 +369,12 @@ def attack_undead(select_undead):
 
             if 1 <= x <= len(Zombie.zombie_list):
                 selected_zombie = Zombie.zombie_list[x - 1]
-                print(select_undead, " will bite ", selected_zombie.getName())
+                print(select_undead.getName(), " will bite ", selected_zombie.getName())
                 # Perform actions with the selected zombie here
             else:
                 print("Invalid selection. Please try again.")
                 select_zombie()
-            return main_menu()
+            return selected_zombie
 
         case 'b':
             counter = 1
@@ -370,12 +386,13 @@ def attack_undead(select_undead):
 
             if 1 <= x <= len(Vampire.vampire_list):
                 selected_vampire = Vampire.vampire_list[x - 1]
-                print(select_undead, " will bite ", selected_vampire.getName())
+                print(select_undead.getName(), " will bite ", selected_vampire.getName())
                 # Perform actions with the selected zombie here
             else:
                 print("Invalid selection. Please try again.")
                 select_vampire()
-            return main_menu()
+            return selected_vampire
+
 
 
 def choice():
