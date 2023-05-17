@@ -30,6 +30,43 @@ class Undead:  # Parent Class
         else:
             self.__hp = self.__hp * multiplier
 
+    def status(self, obj):
+        print(f"\n[{self.getName()}]")
+        print("Health: ", self.getHP())
+
+        if self.getHP() <= 0:
+            self.isDead(True)
+        else:
+            self.isDead(False)
+
+        if self.isDead():
+            if isinstance(self, Vampire):
+                print("Status: Alive (cannot attack)")
+            elif isinstance(self, Lich):
+                print("Status: Alive (cannot attack)")
+            else:
+                print("Status: Dead")
+        else:
+            print("Status: Alive")
+
+        print(f"\n[{obj.getName()}]")
+        print("Health: ", obj.getHP())
+
+        if obj.getHP() <= 0:
+            obj.isDead(True)
+        else:
+            obj.isDead(False)
+
+        if obj.isDead():
+            if isinstance(obj, Vampire):
+                print("Status: Alive (cannot attack)")
+            elif isinstance(obj, Lich):
+                print("Status: Alive (cannot attack)")
+            else:
+                print("Status: Dead")
+        else:
+            print("Status: Alive")
+
 
 class Zombie(Undead):
     zombie_list = []
@@ -37,25 +74,34 @@ class Zombie(Undead):
     def __init__(self):
         super().__init__()
 
-    def attack(self):
-        return super().getHP() * 0.5
+    def attack(self, obj):
+        if self.getHP() < 50:
+            print(f"{self.getName()} cannot Attack {obj.getName()}")
+        if isinstance(obj, Ghost):  # if attacking is a ghost
+            obj.setHP(obj.getHP() - (self.getHP() / 2) * 0.10)
+        elif isinstance(obj, Mummy):    # if attacking is a mummy
+            obj.setHP(obj.getHP() - (self.getHP() / 2))
+            if obj.getHP() <= 0:
+                print("Hp reduced to 0. Reviving...")
+                obj.setHP(100)
+        else:
+            obj.setHP(obj.getHP() - (self.getHP() / 2))
+        Undead.status(self, obj)
+
+
+
 
     def eat(self, obj):
         if self.getHP() < 50:
             print(f"{self.getName()} cannot Attack {obj.getName()}")
+        if isinstance(obj, Ghost):
+            self.setHP(self.getHP() + (obj.getHP() / 2))
+            obj.setHP(obj.getHP() / 2)
         else:
             self.setHP(self.getHP() + (obj.getHP() / 2))
             obj.setHP(obj.getHP() / 2)
-            print(f"[{self.getName()}:]")
-            print("Health: ", self.getHP())
 
-            if Zombie.isDead(self, True):
-                print("Status: Dead")
-            else:
-                print("Status: Alive")
-
-
-
+        Undead.status(self, obj)
     @staticmethod
     def add():
         zombie = Zombie()
@@ -74,9 +120,27 @@ class Vampire(Undead):
 
     def __init__(self):
         super().__init__()
+        self.setHP(multiplier=1.2)
 
-    def attack(self):
-        return super().getHP()
+    def attack(self, obj):
+        if self.getHP() <= 0:
+            print(f"{self.getName()} cannot attack {obj.getName()} anymore!")
+        if isinstance(obj, Ghost):
+            obj.setHP(obj.getHP() - self.getHP() * 0.10)
+        elif isinstance(obj, Mummy):
+            obj.setHP(obj.getHP() - self.getHP())
+            Undead.status(self, obj)
+            if obj.getHP() <= 0:
+                print("Hp reduced to 0. Reviving...")
+                obj.setHP(100)
+        else:
+            obj.setHP(obj.getHP() - self.getHP())
+        Undead.status(self, obj)
+
+
+    def bite(self, obj):
+        self.setHP(self.getHP() + obj.getHP() * 0.8)
+        Undead.status(self, obj)
 
     @staticmethod
     def add():
@@ -84,10 +148,8 @@ class Vampire(Undead):
         vampire_name = input("Name of the Vampire (press enter for default name): ")
         if len(vampire_name) == 0:
             vampire.setName("Vampire")
-            vampire.setHP(120)
         else:
             vampire.setName(vampire_name + " Vampire")
-            vampire.setHP(120)
 
         vampire.vampire_list.append(vampire)  # add to zombie_list list
         print(vampire.getName(), vampire.getHP())
@@ -96,8 +158,18 @@ class Vampire(Undead):
 class Skeleton(Undead):
     def __init__(self, name=None, hp=None):
         super().__init__(name, hp)
+        self.setHP(multiplier=0.8)
 
     skeleton_list = []
+
+
+
+    def attack(self, obj):
+        if isinstance(obj, Ghost):
+            obj.setHP(obj.getHP() - (self.getHP() * 0.7) * 0.10)
+        else:
+            obj.setHP(self.getHP() * 0.7)
+        Undead.status(self, obj)
 
     @staticmethod
     def add():
@@ -112,11 +184,26 @@ class Skeleton(Undead):
         print(skeleton.getName(), skeleton.getHP())
 
 
+
+
+
 class Ghost(Undead):
     def __init__(self, name=None, hp=None):
         super().__init__(name, hp)
+        self.setHP(multiplier=0.5)
 
     ghost_list = []
+
+    def haunt(self, obj):
+        self.setHP(self.getHP() + obj.getHP() * 0.10)
+        Undead.status(self, obj)
+
+    def attack(self, obj):
+        if isinstance(obj, Ghost):
+            obj.setHP(obj.getHP() - (self.getHP() * 0.2) * 0.10)
+        else:
+            obj.setHP(obj.getHP() - self.getHP() * 0.2)
+        Undead.status(self, obj)
 
     @staticmethod
     def add():
@@ -134,9 +221,19 @@ class Ghost(Undead):
 class Lich(Undead):
     def __init__(self, name=None, hp=None):
         super().__init__(name, hp)
+        self.setHP(multiplier=0.8)
 
     lich_list = []
-    print("hi")
+    def leech(self, obj):
+        self.setHP(self.getHP() + obj.getHP() * 0.10)
+        Undead.status(self, obj)
+
+    def attack(self, obj):
+        if isinstance(obj, Ghost):
+            obj.setHP(obj.getHP() - (self.getHP() * 0.7) * 0.10)
+        else:
+             obj.setHP(obj.getHP() - self.getHP() * 0.7)
+        Undead.status(self, obj)
 
     @staticmethod
     def add():
@@ -157,6 +254,23 @@ class Mummy(Undead):
 
     mummy_list = []
 
+    def eat(self, obj):
+        if self.getHP() < 50:
+            print(f"{self.getName()} cannot Attack {obj.getName()}")
+        else:
+            self.setHP(self.getHP() + (obj.getHP() / 2))
+            obj.setHP(obj.getHP() / 2)
+        Undead.status(self, obj)
+
+    def attack(self, obj):
+        if self.getHP() < 50:
+            print(f"{self.getName()} cannot Attack {obj.getName()}")
+        if isinstance(obj, Ghost): # if ghost will be attacked
+            obj.setHP(obj.getHP() - ((self.getHP() *  0.5) + (obj.getHP() * 0.10)) * 0.10 )
+            Undead.status(self, obj)
+        else:
+            obj.setHP(obj.getHP() - ((self.getHP() *  0.5) + (obj.getHP() * 0.10)))
+            Undead.status(self, obj)
     @staticmethod
     def add():
         mummy = Mummy()
@@ -209,8 +323,16 @@ def choose_command():
             return select_zombie()
         case 'b':
             return select_vampire()
+        case 'c':
+            return select_skeleton()
+        case 'd':
+            return select_ghost()
+        case 'e':
+            return select_lich()
+        case 'f':
+            return select_mummy()
         case _:
-            return choose_command()
+            return main_menu()
 
 
 def select_zombie():
@@ -245,22 +367,17 @@ def select_zombie():
             case 1:
                 print("Use Bite to who?\n\n")
                 Zombie.eat(selected_zombie, attack_undead(selected_zombie))
-                #attack_undead(selected_zombie.getName())
-
-
-
-                return main_menu()
             case 2:
                 print("YOu have used normal attack!!")
-                return main_menu()
-
+                Zombie.attack(selected_zombie, attack_undead(selected_zombie))
+            case _:
+                print("Invalid Input Please try again!")
+                return select_zombie()
     else:
         print("Invalid selection. Please try again.")
         select_zombie()
 
-    return choose_command()
-
-
+    return main_menu()
 
 def select_vampire():
     counter = 1
@@ -277,17 +394,213 @@ def select_vampire():
 
     x = int(input("Select a vampire: "))
 
-    if 1 <= x <= len(Zombie.zombie_list):
-        selected_zombie = Zombie.zombie_list[x - 1]
-        print("You selected:", selected_zombie.getName())
-        # Perform actions with the selected zombie here
+    if 1 <= x <= len(Vampire.vampire_list):
+        selected_vampire = Vampire.vampire_list [x - 1]
+        print("You selected:", selected_vampire.getName())
+        # Perform actions with the selected vampire here
+
+        print("                         [SKILLS]\n")
+        print("[1] - Bite")
+        print("Bite which increases their HP by 80% of the undead HP being bitten.\n")
+        print("[2] - Normal Attack")
+        print("Deals equivalent of vampire's HP.\n")
+
+        match int(choice()):
+            case 1:
+                print("Use Bite to who?\n\n")
+                Vampire.bite(selected_vampire, attack_undead(selected_vampire))
+            case 2:
+                if selected_vampire.getHP() <= 0:
+                    print("You Cannot attack without HP!")
+                    selected_vampire.setHP(0)
+                    return choose_command()
+                print("You have used normal attack!!")
+                Vampire.attack(selected_vampire, attack_undead(selected_vampire))
+            case _:
+                print("Invalid Input Please try again!")
+                return select_vampire()
     else:
         print("Invalid selection. Please try again.")
-        select_zombie()
+        select_vampire()
 
-    return choose_command()
+    return main_menu()
 
+def select_skeleton():
+    counter = 1
+    if len(Skeleton.skeleton_list) == 0:
+        print("\nThere are No Vampires. try again.")
+        return choose_command()
+    else:
+        print("\n\n-=======================-")
+        print("     S K E L E T O N     ")
+        print("-=======================-")
+        for i, skeleton in enumerate(Skeleton.skeleton_list):
+            print("[", counter, "]", skeleton.getName())
+            counter += 1
 
+    x = int(input("Select a Skeleton: "))
+
+    if 1 <= x <= len(Skeleton.skeleton_list):
+        selected_skeleton = Skeleton.skeleton_list[x - 1]
+        print("You selected:", selected_skeleton.getName())
+        # Perform actions with the selected skeleton here
+
+        print("                         [SKILLS]\n")
+        print("[1] - Normal Attack")
+        print("Deals 70% of it's HP.\n")
+
+        match int(choice()):
+            case 1:
+                print("Use Normal Attack to who?\n\n")
+                Skeleton.attack(selected_skeleton, attack_undead(selected_skeleton))
+                return main_menu()
+            case _:
+                print("Invalid Input Please try again!")
+                return select_skeleton()
+    else:
+        print("Invalid selection. Please try again.")
+        select_skeleton()
+
+    return main_menu()
+
+def select_ghost():
+    counter = 1
+    if len(Ghost.ghost_list) == 0:
+        print("\nThere are No Ghost. try again.")
+        return choose_command()
+    else:
+        print("\n\n-=======================-")
+        print("     G H O S T     ")
+        print("-=======================-")
+        for i, ghost in enumerate(Ghost.ghost_list):
+            print("[", counter, "]", ghost.getName())
+            counter += 1
+
+    x = int(input("Select a Ghost: "))
+
+    if 1 <= x <= len(Ghost.ghost_list):
+        selected_ghost = Ghost.ghost_list[x - 1]
+        print("You selected:", selected_ghost.getName())
+        # Perform actions with the selected ghost here
+
+        print("                         [SKILLS]\n")
+        print("[1] - Haunt")
+        print("Increases its HP by the 10% of the undead being haunt.\n")
+        print("[2] - Normal Attack")
+        print("Deals 20% of the Ghost's HP")
+
+        match int(choice()):
+            case 1:
+                print("Use Haunt to who?\n\n")
+                Ghost.haunt(selected_ghost, attack_undead(selected_ghost))
+                return main_menu()
+            case 2:
+                print("Use Normal Attack to who?\n\n")
+                Ghost.attack(selected_ghost, attack_undead(selected_ghost))
+            case _:
+                print("Invalid Input Please try again!")
+                return select_ghost()
+    else:
+        print("Invalid selection. Please try again.")
+        select_ghost()
+
+    return main_menu()
+
+def select_lich():
+    counter = 1
+    if len(Lich.lich_list) == 0:
+        print("\nThere are No Lich. try again.")
+        return choose_command()
+    else:
+        print("\n\n-=======================-")
+        print("     L I C H     ")
+        print("-=======================-")
+        for l, lich in enumerate(Lich.lich_list):
+            print("[", counter, "]", lich.getName())
+            counter += 1
+
+    x = int(input("Select a Lich: "))
+
+    if 1 <= x <= len(Lich.lich_list):
+        selected_lich = Lich.lich_list[x - 1]
+        print("You selected:", selected_lich.getName())
+        # Perform actions with the selected lich here
+
+        print("                         [SKILLS]\n")
+        print("[1] - Leech")
+        print("Cast a spell on undead which gets the 10% of their HP and add it to its HP.\n")
+        print("[2] - Normal Attack")
+        print("Deals 70% of the Lich's HP")
+
+        match int(choice()):
+            case 1:
+                print("Use Leech to who?\n\n")
+                Lich.leech(selected_lich, attack_undead(selected_lich))
+                return main_menu()
+            case 2:
+                if selected_lich.getHP() <= 0:
+                    print("You Cannot attack without HP!")
+                    selected_lich.setHP(0)
+                    return choose_command()
+                else:
+                    print("Use Normal Attack to who?\n\n")
+                    Lich.attack(selected_lich, attack_undead(selected_lich))
+            case _:
+                print("Invalid Input Please try again!")
+                return select_lich()
+
+    else:
+        print("Invalid selection. Please try again.")
+        select_lich()
+
+    return main_menu()
+
+def select_mummy():
+    counter = 1
+    if len(Mummy.mummy_list) == 0:
+        print("\nThere are No Mummy. try again.")
+        return choose_command()
+    else:
+        print("\n\n-=======================-")
+        print("     M U M M Y     ")
+        print("-=======================-")
+        for m, mummy in enumerate(Mummy.mummy_list):
+            print("[", counter, "]", mummy.getName())
+            counter += 1
+
+    x = int(input("Select a Mummy: "))
+
+    if 1 <= x <= len(Mummy.mummy_list):
+        selected_mummy = Mummy.mummy_list[x - 1]
+        print("You selected:", selected_mummy.getName())
+        # Perform actions with the selected Mummy here
+
+        print("                         [SKILLS]\n")
+        print("[1] - Eat")
+        print("Cast a spell on undead which gets the 10% of their HP and add it to its HP.\n")
+        print("[2] - Normal Attack")
+        print("Deals 70% of the Lich's HP")
+
+        match int(choice()):
+            case 1:
+                print("Use Eat to who?\n\n")
+                Mummy.eat(selected_mummy, attack_undead(selected_mummy))
+                return main_menu()
+            case 2:
+                print("Use Normal Attack to who?\n\n")
+                Mummy.attack(selected_mummy, attack_undead(selected_mummy))
+
+                if selected_mummy.getHP() <= 0:
+                    Undead.isDead(selected_mummy, None)
+            case _:
+                print("Invalid Input Please try again!")
+                return select_mummy()
+
+    else:
+        print("Invalid selection. Please try again.")
+        select_mummy()
+
+    return main_menu()
 def choose_undead():
     print("\n-=======================-")
     print(" C R E A T E  U N D E A D")
@@ -300,37 +613,28 @@ def choose_undead():
     print("[E] - Lich")
     print("[F] - Mummy")
     print("\n[0] <-- Go back")
-
     match choice():
         case 'a':  # Zombie
             Zombie.add()
             return main_menu()
-
         case 'b':  # Vampire
             Vampire.add()
             return main_menu()
-
         case 'c':  # Skeleton
             Skeleton.add()
             return main_menu()
-
         case 'd':  # Ghost
             Ghost.add()
             return main_menu()
-
         case 'e':  # Lich
             Lich.add()
             return main_menu()
-
         case 'f':  # Mummy
             Mummy.add()
             return main_menu()
-
         case _:
             print("Invalid Input!!!\n\n")
             return choose_undead()
-
-
 def display_all():
     undead_list = (Zombie.zombie_list + Vampire.vampire_list + Skeleton.skeleton_list + Ghost.ghost_list +
                    Lich.lich_list + Mummy.mummy_list)
@@ -343,25 +647,41 @@ def display_all():
         print("--------------------")
         print(undead.getName())
         print("HP: ", undead.getHP())
-        print("State: ", undead.isDead())
+
+
+        if undead.getHP() <= 0:
+            undead.isDead(True)
+        else:
+            undead.isDead(False)
+
+        if undead.isDead():
+            if isinstance(undead, Vampire):
+                print("Status: Alive (cannot attack)")
+            elif isinstance(undead, Lich):
+                print("Status: Alive (cannot attack)")
+            else:
+                print("Status: Dead")
+        else:
+            print("Status: Alive")
     return main_menu()
 
 
 def attack_undead(select_undead):
+    global selected_zombie, selected_vampire, selected_ghost, selected_skeleton, selected_lich, selected_mummy
     print("-=================================-")
     print("    A T T A C K   U N D E A D     ")
     print("-=================================-")
     print("[A] - Zombie")
     print("[B] - Vampire")
-    print("[3] - Skeleton")
-    print("[4] - Ghost")
-    print("[5] - Lich")
-    print("[6] - Mummy")
+    print("[C] - Skeleton")
+    print("[D] - Ghost")
+    print("[E] - Lich")
+    print("[F] - Mummy")
     print("[0] <-- Go back")
+    counter = 1
 
     match choice():
         case 'a':
-            counter = 1
             for z, zombie in enumerate(Zombie.zombie_list):
                 print("[", counter, "]", zombie.getName())
                 counter += 1
@@ -370,15 +690,16 @@ def attack_undead(select_undead):
 
             if 1 <= x <= len(Zombie.zombie_list):
                 selected_zombie = Zombie.zombie_list[x - 1]
-                print(select_undead.getName(), " will bite ", selected_zombie.getName())
+                print(select_undead.getName(), " will attack ", selected_zombie.getName())
                 # Perform actions with the selected zombie here
             else:
                 print("Invalid selection. Please try again.")
                 select_zombie()
+
             return selected_zombie
 
         case 'b':
-            counter = 1
+            # counter = 1
             for v, vampire in enumerate(Vampire.vampire_list):
                 print("[", counter, "]", vampire.getName())
                 counter += 1
@@ -387,18 +708,78 @@ def attack_undead(select_undead):
 
             if 1 <= x <= len(Vampire.vampire_list):
                 selected_vampire = Vampire.vampire_list[x - 1]
-                print(select_undead.getName(), " will bite ", selected_vampire.getName())
+                print(select_undead.getName(), " will attack ", selected_vampire.getName())
                 # Perform actions with the selected zombie here
             else:
                 print("Invalid selection. Please try again.")
                 select_vampire()
             return selected_vampire
+        case 'c':
+            # counter = 1
+            for s, skeleton in enumerate(Skeleton.skeleton_list):
+                print("[", counter, "]", skeleton.getName())
+                counter += 1
 
+            x = int(input("Select a Skeleton: "))
 
+            if 1 <= x <= len(Skeleton.skeleton_list):
+                selected_skeleton = Skeleton.skeleton_list[x - 1]
+                print(select_undead.getName(), " will attack ", selected_vampire.getName())
+                # Perform actions with the selected zombie here
+            else:
+                print("Invalid selection. Please try again.")
+                select_skeleton()
+            return selected_skeleton
+        case 'd':
+            counter = 1
+            for g, ghost in enumerate(Ghost.ghost_list):
+                print("[", counter, "]", ghost.getName())
+                counter += 1
+            x = int(input("Select a Ghost: "))
 
+            if 1 <= x <= len(Ghost.ghost_list):
+                selected_ghost = Ghost.ghost_list[x - 1]
+                print(select_undead.getName(), " will attack ", selected_ghost.getName())
+                # Perform actions with the selected ghost here
+            else:
+                print("Invalid selection. Please try again.")
+                select_ghost()
+            return selected_ghost
+        case 'e':
+            for l, lich in enumerate(Lich.lich_list):
+                print("[", counter, "]", lich.getName())
+                counter += 1
+            x = int(input("Select a Lich: "))
+
+            if 1 <= x <= len(Lich.lich_list):
+                selected_lich = Lich.lich_list[x - 1]
+                print(select_undead.getName(), " will attack ", selected_lich.getName())
+                # Perform actions with the selected lich here
+            else:
+                print("Invalid selection. Please try again.")
+                select_lich()
+            return selected_lich
+        case 'f':
+            for m, mummy in enumerate(Mummy.mummy_list):
+                print("[", counter, "]", mummy.getName())
+                counter += 1
+
+            x = int(input("Select a Mummy: "))
+            if 1 <= x <= len(Mummy.mummy_list):
+                selected_mummy = Mummy.mummy_list[x - 1]
+                print(select_undead.getName(), " will attack ", selected_mummy.getName())
+                # Perform actions with the selected mummy here
+
+            else:
+                print("Invalid selection. Please try again.")
+                select_mummy()
+            return selected_mummy
+        case '0':
+            return choose_command()
+        case _:
+            return "Error" , choose_command()
 def choice():
     c = input("Please select your choice: ").lower()  # convert to higher case
     return c
-
 
 print(main_menu())
